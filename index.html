@@ -4,97 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2FA Swift</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/otplib/12.0.1/otplib-browser.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsOTP/2.0.0/jsOTP.min.js"></script>
     <style>
-        :root { --bg: #000000; --card: #1c1c1e; --accent: #0A84FF; --text: #ffffff; }
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
-            background: var(--bg); color: var(--text); 
-            display: flex; justify-content: center; align-items: center; 
-            height: 100vh; margin: 0; overflow: hidden;
-        }
-        .container { width: 90%; max-width: 400px; text-align: center; }
-        .card { 
-            background: var(--card); padding: 40px 20px; 
-            border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        input { 
-            width: 80%; background: #2c2c2e; border: none; 
-            border-radius: 12px; padding: 15px; color: white; 
-            font-size: 16px; margin-bottom: 30px; outline: none; text-align: center;
-        }
-        .code { 
-            font-size: 64px; font-weight: 800; color: var(--accent); 
-            letter-spacing: 5px; margin-bottom: 20px; cursor: pointer;
-        }
-        .timer-bar { width: 100%; height: 4px; background: #333; border-radius: 2px; }
-        #progress { width: 100%; height: 100%; background: var(--accent); transition: width 1s linear; }
-        .hint { color: #8e8e93; font-size: 13px; margin-top: 15px; }
+        :root { --bg: #000; --card: #1c1c1e; --accent: #0A84FF; --text: #fff; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: var(--card); padding: 30px; border-radius: 24px; width: 90%; max-width: 350px; text-align: center; }
+        input { width: 100%; background: #2c2c2e; border: 2px solid #3a3a3c; border-radius: 12px; padding: 12px; color: white; font-size: 14px; margin-bottom: 20px; outline: none; box-sizing: border-box; }
+        .code { font-size: 60px; font-weight: 800; color: var(--accent); letter-spacing: 4px; margin: 10px 0; }
+        .timer-bar { width: 100%; height: 4px; background: #333; margin-top: 20px; }
+        #progress { height: 100%; background: var(--accent); width: 100%; transition: width 1s linear; }
     </style>
 </head>
 <body>
-
-<div class="container">
     <div class="card">
-        <input type="text" id="secret" placeholder="Вставьте Secret Key" spellcheck="false">
+        <input type="text" id="secret" placeholder="Вставьте ключ (Base32)" spellcheck="false">
         <div class="code" id="otp">000000</div>
         <div class="timer-bar"><div id="progress"></div></div>
-        <div class="hint" id="status">Введите ключ</div>
+        <div id="status" style="color: #8e8e93; font-size: 12px; margin-top: 10px;">ОЖИДАНИЕ</div>
     </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsOTP/2.0.0/jsOTP.min.js"></script>
 <script>
     const secretInput = document.getElementById('secret');
     const otpDisplay = document.getElementById('otp');
     const progress = document.getElementById('progress');
-    const timerText = document.getElementById('timer');
 
-    // Загрузка из памяти
-    const savedSecret = localStorage.getItem('2fa_secret');
-    if (savedSecret) {
-        secretInput.value = savedSecret;
-    }
-
-    function updateOTP() {
-        // ОЧИСТКА: убираем всё, кроме букв A-Z и цифр 2-7
-        let rawValue = secretInput.value;
-        let cleanSecret = rawValue.replace(/[^A-Za-z2-7]/g, '').toUpperCase();
+    function update() {
+        // Убираем всё, что не входит в стандарт Base32 (A-Z, 2-7)
+        let val = secretInput.value.replace(/[^A-Za-z2-7]/g, '').toUpperCase();
         
-        if (!cleanSecret) {
+        if (!val) {
             otpDisplay.innerText = "000000";
-            timerText.innerText = "Введите ключ";
             return;
         }
 
         try {
-            // Сохраняем чистый ключ
-            localStorage.setItem('2fa_secret', cleanSecret);
-
-            // Используем jsOTP для генерации
             const totp = new jsOTP.totp();
-            const token = totp.getOtp(cleanSecret);
+            const code = totp.getOtp(val);
+            otpDisplay.innerText = code;
             
-            if (token) {
-                otpDisplay.innerText = token;
-                
-                const seconds = Math.floor(Date.now() / 1000) % 30;
-                const timeLeft = 30 - seconds;
-                progress.style.width = (timeLeft / 30 * 100) + "%";
-                timerText.innerText = `Обновится через ${timeLeft}с`;
-            }
-        } catch (err) {
-            console.error(err);
-            otpDisplay.innerText = "INVALID";
-            timerText.innerText = "Ошибка в структуре ключа";
+            const seconds = Math.floor(Date.now() / 1000) % 30;
+            progress.style.width = ((30 - seconds) / 30 * 100) + "%";
+            document.getElementById('status').innerText = "КОД АКТИВЕН";
+        } catch (e) {
+            otpDisplay.innerText = "ERROR";
+            document.getElementById('status').innerText = "НЕВЕРНЫЙ СИМВОЛ В КЛЮЧЕ";
         }
     }
 
-    secretInput.addEventListener('input', updateOTP);
-    setInterval(updateOTP, 1000);
-    // Запускаем проверку сразу, если ключ был в памяти
-    window.onload = updateOTP;
+    secretInput.addEventListener('input', update);
+    setInterval(update, 1000);
 </script>
-
 </body>
 </html>

@@ -3,89 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2FA Decoder</title>
+    <title>2FA Swift</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/otplib/12.0.1/otplib-browser.js"></script>
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --accent: #0A84FF; --text: #fff; }
+        :root { --bg: #000000; --card: #1c1c1e; --accent: #0A84FF; --text: #ffffff; }
         body { 
             font-family: -apple-system, system-ui, sans-serif; 
             background: var(--bg); color: var(--text); 
             display: flex; justify-content: center; align-items: center; 
-            height: 100vh; margin: 0;
+            height: 100vh; margin: 0; overflow: hidden;
         }
+        .container { width: 90%; max-width: 400px; text-align: center; }
         .card { 
-            background: var(--card); padding: 30px; border-radius: 24px; 
-            width: 90%; max-width: 350px; text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            background: var(--card); padding: 40px 20px; 
+            border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         input { 
-            width: 100%; background: #2c2c2e; border: 2px solid #3a3a3c; 
-            border-radius: 12px; padding: 12px; color: white; 
-            font-size: 16px; margin-bottom: 20px; outline: none; box-sizing: border-box;
-            text-align: center;
+            width: 80%; background: #2c2c2e; border: none; 
+            border-radius: 12px; padding: 15px; color: white; 
+            font-size: 16px; margin-bottom: 30px; outline: none; text-align: center;
         }
-        input:focus { border-color: var(--accent); }
         .code { 
-            font-size: 56px; font-weight: 800; color: var(--accent); 
-            letter-spacing: 4px; margin: 10px 0; font-variant-numeric: tabular-nums;
+            font-size: 64px; font-weight: 800; color: var(--accent); 
+            letter-spacing: 5px; margin-bottom: 20px; cursor: pointer;
         }
-        .progress-container { width: 100%; height: 4px; background: #333; border-radius: 2px; margin-top: 20px; }
-        #progress { width: 100%; height: 100%; background: var(--accent); transition: width 0.5s linear; }
-        .status { color: #8e8e93; font-size: 12px; margin-top: 10px; text-transform: uppercase; }
+        .timer-bar { width: 100%; height: 4px; background: #333; border-radius: 2px; }
+        #progress { width: 100%; height: 100%; background: var(--accent); transition: width 1s linear; }
+        .hint { color: #8e8e93; font-size: 13px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <input type="text" id="secret" placeholder="Вставьте Secret Key" autocomplete="off" autocapitalize="off">
-    <div class="code" id="otp">000000</div>
-    <div class="progress-container"><div id="progress"></div></div>
-    <div class="status" id="timer">Введите ключ</div>
+<div class="container">
+    <div class="card">
+        <input type="text" id="secret" placeholder="Вставьте Secret Key" spellcheck="false">
+        <div class="code" id="otp">000000</div>
+        <div class="timer-bar"><div id="progress"></div></div>
+        <div class="hint" id="status">Введите ключ</div>
+    </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsOTP/2.0.0/jsOTP.min.js"></script>
 <script>
-    const otplib = window.otplib;
     const secretInput = document.getElementById('secret');
     const otpDisplay = document.getElementById('otp');
     const progress = document.getElementById('progress');
     const timerText = document.getElementById('timer');
 
-    // 1. Загружаем ключ из памяти браузера (LocalStorage), если он там есть
+    // Загрузка из памяти
     const savedSecret = localStorage.getItem('2fa_secret');
     if (savedSecret) {
         secretInput.value = savedSecret;
     }
 
     function updateOTP() {
-        const secret = secretInput.value.replace(/\s/g, '').toUpperCase();
-        if (!secret) {
+        // ОЧИСТКА: убираем всё, кроме букв A-Z и цифр 2-7
+        let rawValue = secretInput.value;
+        let cleanSecret = rawValue.replace(/[^A-Za-z2-7]/g, '').toUpperCase();
+        
+        if (!cleanSecret) {
             otpDisplay.innerText = "000000";
-            timerText.innerText = "Ожидание ключа";
+            timerText.innerText = "Введите ключ";
             return;
         }
 
         try {
-            // Сохраняем ключ в память, чтобы он не пропадал
-            localStorage.setItem('2fa_secret', secret);
+            // Сохраняем чистый ключ
+            localStorage.setItem('2fa_secret', cleanSecret);
 
-            // Генерируем код (без запросов к серверу!)
-            const token = otplib.authenticator.generate(secret);
-            otpDisplay.innerText = token;
+            // Используем jsOTP для генерации
+            const totp = new jsOTP.totp();
+            const token = totp.getOtp(cleanSecret);
             
-            const seconds = Math.floor(Date.now() / 1000) % 30;
-            const timeLeft = 30 - seconds;
-            progress.style.width = (timeLeft / 30 * 100) + "%";
-            timerText.innerText = `Обновится через ${timeLeft}с`;
+            if (token) {
+                otpDisplay.innerText = token;
+                
+                const seconds = Math.floor(Date.now() / 1000) % 30;
+                const timeLeft = 30 - seconds;
+                progress.style.width = (timeLeft / 30 * 100) + "%";
+                timerText.innerText = `Обновится через ${timeLeft}с`;
+            }
         } catch (err) {
-            otpDisplay.innerText = "ERROR";
-            timerText.innerText = "Неверный формат ключа";
+            console.error(err);
+            otpDisplay.innerText = "INVALID";
+            timerText.innerText = "Ошибка в структуре ключа";
         }
     }
 
-    // Слушаем ввод и обновляем код каждую секунду
     secretInput.addEventListener('input', updateOTP);
     setInterval(updateOTP, 1000);
-    updateOTP(); // Запуск при загрузке
+    // Запускаем проверку сразу, если ключ был в памяти
+    window.onload = updateOTP;
 </script>
 
 </body>

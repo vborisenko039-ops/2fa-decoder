@@ -18,41 +18,44 @@
 </head>
 <body>
     <div class="card">
-        <input type="text" id="secret" placeholder="Вставьте Secret Key" autocomplete="off" spellcheck="false">
+        <input type="text" id="secret" placeholder="Вставьте ваш ключ" autocomplete="off" spellcheck="false">
         <div class="code" id="otp">000000</div>
         <div class="timer-bar"><div id="progress"></div></div>
-        <div class="status" id="timer">ОЖИДАНИЕ КЛЮЧА</div>
+        <div class="status" id="timer">Ожидание...</div>
     </div>
 
 <script>
     const otplib = window.otplib;
+    // Настройка библиотеки на самый простой режим (как в Python)
+    otplib.authenticator.options = { epoch: Date.now(), step: 30 };
+
     const secretInput = document.getElementById('secret');
     const otpDisplay = document.getElementById('otp');
     const progress = document.getElementById('progress');
     const timerText = document.getElementById('timer');
 
     function update() {
-        // Очищаем ввод: только A-Z и 2-7. Всё остальное игнорируем.
-        let raw = secretInput.value;
-        let clean = raw.replace(/[^A-Za-z2-7]/g, '').toUpperCase();
+        let raw = secretInput.value.trim();
+        // Убираем только пробелы, остальное оставляем как есть
+        let clean = raw.replace(/\s/g, '').toUpperCase();
         
         if (!clean) {
             otpDisplay.innerText = "000000";
-            timerText.innerText = "ВВЕДИТЕ КЛЮЧ";
             return;
         }
 
         try {
-            // Генерация по стандарту RFC 6238
+            // Генерируем код без лишних проверок формата
             const token = otplib.authenticator.generate(clean);
             otpDisplay.innerText = token;
             
             const timeLeft = 30 - (Math.floor(Date.now() / 1000) % 30);
             progress.style.width = (timeLeft / 30 * 100) + "%";
-            timerText.innerText = `ОБНОВЛЕНИЕ ЧЕРЕЗ ${timeLeft}С`;
+            timerText.innerText = `Обновится через ${timeLeft}с`;
         } catch (err) {
+            // Если ошибка всё же есть, выводим её в консоль для отладки
+            console.error(err);
             otpDisplay.innerText = "ERROR";
-            timerText.innerText = "ОШИБКА ФОРМАТА";
         }
     }
 

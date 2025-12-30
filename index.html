@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Google 2FA Decoder</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/otplib/12.0.1/otplib-browser.js"></script>
+    <title>2FA Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.4.2/sha.js"></script>
     <style>
         :root { --bg: #000; --card: #1c1c1e; --accent: #0A84FF; --text: #fff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -13,46 +13,83 @@
         .code { font-size: 64px; font-weight: 800; color: var(--accent); letter-spacing: 4px; margin: 10px 0; font-variant-numeric: tabular-nums; }
         .timer-bar { width: 100%; height: 4px; background: #333; margin-top: 20px; border-radius: 2px; overflow: hidden; }
         #progress { height: 100%; background: var(--accent); width: 100%; transition: width 1s linear; }
+        .status { color: #8e8e93; font-size: 12px; margin-top: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
     <div class="card">
-        <input type="text" id="secret" placeholder="Вставьте ключ (как в Google)" spellcheck="false" autocomplete="off">
+        <input type="text" id="secret" placeholder="Вставьте ключ" autocomplete="off" spellcheck="false">
         <div class="code" id="otp">000000</div>
         <div class="timer-bar"><div id="progress"></div></div>
-        <div id="status" style="color: #8e8e93; font-size: 12px; margin-top: 10px;">СИНХРОНИЗАЦИЯ...</div>
+        <div class="status" id="timer">ОЖИДАНИЕ</div>
     </div>
 
 <script>
-    const otplib = window.otplib;
     const secretInput = document.getElementById('secret');
     const otpDisplay = document.getElementById('otp');
     const progress = document.getElementById('progress');
+    const timerText = document.getElementById('timer');
+
+    // Ручной декодер Base32 -> Hex (Самая надежная часть)
+    function base32tohex(base32) {
+        let base32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        let bits = "";
+        let hex = "";
+
+        // Удаляем всё лишнее (пробелы, тире) и делаем UpperCase
+        base32 = base32.replace(/\s/g, '').toUpperCase();
+
+        for (let i = 0; i < base32.length; i++) {
+            let val = base32chars.indexOf(base32.charAt(i));
+            if (val === -1) continue; // Пропускаем плохие символы, не выдавая ошибку
+            bits += val.toString(2).padStart(5, '0');
+        }
+
+        for (let i = 0; i + 4 <= bits.length; i += 4) {
+            let chunk = bits.substr(i, 4);
+            hex = hex + parseInt(chunk, 2).toString(16);
+        }
+        return hex;
+    }
 
     function update() {
-        // 1. Очистка ключа под стандарт Google (Base32)
-        // Убираем пробелы, переводим в верхний регистр
-        let raw = secretInput.value;
-        let clean = raw.replace(/\s/g, '').toUpperCase();
-        
-        if (!clean) {
+        let secret = secretInput.value;
+        if (!secret) {
             otpDisplay.innerText = "000000";
             return;
         }
 
         try {
-            // 2. Генерация по алгоритму TOTP (как в Google Authenticator)
-            const token = otplib.authenticator.generate(clean);
-            otpDisplay.innerText = token;
+            // 1. Превращаем Base32 в Hex вручную
+            const keyHex = base32tohex(secret);
+
+            // 2. Считаем время
+            const epoch = Math.round(new Date().getTime() / 1000.0);
+            let time = Math.floor(epoch / 30).toString(16);
+            while (time.length < 16) time = "0" + time;
+
+            // 3. Считаем HMAC-SHA1 (Стандарт Google)
+            const shaObj = new jsSHA("SHA-1", "HEX");
+            shaObj.setHMACKey(keyHex, "HEX");
+            shaObj.update(time);
+            const hmac = shaObj.getHMAC("HEX");
+
+            // 4. Вырезаем 6 цифр
+            const offset = parseInt(hmac.substring(hmac.length - 1), 16);
+            let otp = (parseInt(hmac.substr(offset * 2, 8), 16) & 0x7fffffff) + "";
+            otp = otp.substr(otp.length - 6, 6);
+
+            otpDisplay.innerText = otp;
+
+            // Таймер
+            const seconds = epoch % 30;
+            progress.style.width = ((30 - seconds) / 30 * 100) + "%";
+            timerText.innerText = `ОБНОВЛЕНИЕ ЧЕРЕЗ ${30 - seconds}с`;
             
-            const seconds = Math.floor(Date.now() / 1000) % 30;
-            const timeLeft = 30 - seconds;
-            progress.style.width = (timeLeft / 30 * 100) + "%";
-            document.getElementById('status').innerText = "ОБНОВЛЕНИЕ ЧЕРЕЗ " + timeLeft + "с";
-        } catch (err) {
-            // Если ключ совсем не Base32 (например содержит 8 или 9)
+        } catch (e) {
+            // Если ключ совсем кривой
+            console.log(e);
             otpDisplay.innerText = "ERROR";
-            document.getElementById('status').innerText = "НЕВЕРНЫЙ ФОРМАТ КЛЮЧА";
         }
     }
 

@@ -21,7 +21,7 @@
         <input type="text" id="secret" placeholder="Вставьте Secret Key" autocomplete="off" spellcheck="false">
         <div class="code" id="otp">000000</div>
         <div class="timer-bar"><div id="progress"></div></div>
-        <div class="status" id="timer">Ожидание ключа</div>
+        <div class="status" id="timer">ОЖИДАНИЕ КЛЮЧА</div>
     </div>
 
 <script>
@@ -31,35 +31,33 @@
     const progress = document.getElementById('progress');
     const timerText = document.getElementById('timer');
 
-    function updateOTP() {
-        // 1. ЧИСТКА: оставляем ТОЛЬКО символы Base32 (A-Z и 2-7)
-        // Все двоеточия, пробелы, 8, 9, 0 будут удалены автоматически
+    function update() {
+        // Очищаем ввод: только A-Z и 2-7. Всё остальное игнорируем.
         let raw = secretInput.value;
         let clean = raw.replace(/[^A-Za-z2-7]/g, '').toUpperCase();
         
         if (!clean) {
             otpDisplay.innerText = "000000";
-            timerText.innerText = "Введите ключ";
+            timerText.innerText = "ВВЕДИТЕ КЛЮЧ";
             return;
         }
 
         try {
-            // 2. ГЕНЕРАЦИЯ: теперь математика будет как в Google Authenticator
+            // Генерация по стандарту RFC 6238
             const token = otplib.authenticator.generate(clean);
             otpDisplay.innerText = token;
             
-            const seconds = Math.floor(Date.now() / 1000) % 30;
-            const timeLeft = 30 - seconds;
+            const timeLeft = 30 - (Math.floor(Date.now() / 1000) % 30);
             progress.style.width = (timeLeft / 30 * 100) + "%";
-            timerText.innerText = `Обновится через ${timeLeft}с`;
+            timerText.innerText = `ОБНОВЛЕНИЕ ЧЕРЕЗ ${timeLeft}С`;
         } catch (err) {
             otpDisplay.innerText = "ERROR";
-            timerText.innerText = "Ошибка в ключе";
+            timerText.innerText = "ОШИБКА ФОРМАТА";
         }
     }
 
-    secretInput.addEventListener('input', updateOTP);
-    setInterval(updateOTP, 1000);
+    secretInput.addEventListener('input', update);
+    setInterval(update, 1000);
 </script>
 </body>
 </html>

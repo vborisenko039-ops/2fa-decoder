@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2FA Swift</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.4.2/sha.js"></script>
+    <title>2FA Decoder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/otplib/12.0.1/otplib-browser.js"></script>
     <style>
         :root { --bg: #000; --card: #1c1c1e; --accent: #0A84FF; --text: #fff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -13,56 +13,53 @@
         .code { font-size: 64px; font-weight: 800; color: var(--accent); letter-spacing: 4px; margin: 10px 0; }
         .timer-bar { width: 100%; height: 4px; background: #333; margin-top: 20px; border-radius: 2px; overflow: hidden; }
         #progress { height: 100%; background: var(--accent); width: 100%; transition: width 1s linear; }
+        .status { color: #8e8e93; font-size: 12px; margin-top: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
     <div class="card">
-        <input type="text" id="secret" placeholder="Вставьте любой ключ" spellcheck="false">
+        <input type="text" id="secret" placeholder="Вставьте Secret Key" autocomplete="off" spellcheck="false">
         <div class="code" id="otp">000000</div>
         <div class="timer-bar"><div id="progress"></div></div>
-        <div id="status" style="color: #8e8e93; font-size: 12px; margin-top: 10px;">ГОТОВ К РАБОТЕ</div>
+        <div class="status" id="timer">Ожидание ключа</div>
     </div>
 
 <script>
-    // Функция генерации кода из ЛЮБОГО текста (не только Base32)
-    function dec2hex(s) { return (s < 15.5 ? '0' : '') + Math.round(s).toString(16); }
-    function hex2dec(s) { return parseInt(s, 16); }
-    function leftpad(str, len, pad) { if (len + 1 >= str.length) { str = Array(len + 1 - str.length).join(pad) + str; } return str; }
-
+    const otplib = window.otplib;
     const secretInput = document.getElementById('secret');
     const otpDisplay = document.getElementById('otp');
     const progress = document.getElementById('progress');
+    const timerText = document.getElementById('timer');
 
-    function update() {
-        const secret = secretInput.value.trim();
-        if (!secret) { otpDisplay.innerText = "000000"; return; }
+    function updateOTP() {
+        // 1. ЧИСТКА: оставляем ТОЛЬКО символы Base32 (A-Z и 2-7)
+        // Все двоеточия, пробелы, 8, 9, 0 будут удалены автоматически
+        let raw = secretInput.value;
+        let clean = raw.replace(/[^A-Za-z2-7]/g, '').toUpperCase();
+        
+        if (!clean) {
+            otpDisplay.innerText = "000000";
+            timerText.innerText = "Введите ключ";
+            return;
+        }
 
         try {
-            const epoch = Math.round(new Date().getTime() / 1000.0);
-            const time = leftpad(dec2hex(Math.floor(epoch / 30)), 16, '0');
-            
-            // Генерируем HMAC-SHA1
-            const shaObj = new jsSHA("SHA-1", "TEXT");
-            shaObj.setHMACKey(secret, "TEXT");
-            shaObj.update(time);
-            const hmac = shaObj.getHMAC("HEX");
-
-            const offset = hex2dec(hmac.substring(hmac.length - 1));
-            let otp = (hex2dec(hmac.substr(offset * 2, 8)) & hex2dec('7fffffff')) + '';
-            otp = otp.substr(otp.length - 6, 6);
-            
-            otpDisplay.innerText = otp;
+            // 2. ГЕНЕРАЦИЯ: теперь математика будет как в Google Authenticator
+            const token = otplib.authenticator.generate(clean);
+            otpDisplay.innerText = token;
             
             const seconds = Math.floor(Date.now() / 1000) % 30;
-            progress.style.width = ((30 - seconds) / 30 * 100) + "%";
-            document.getElementById('status').innerText = "ОБНОВЛЕНИЕ ЧЕРЕЗ " + (30 - seconds) + "с";
-        } catch (e) {
+            const timeLeft = 30 - seconds;
+            progress.style.width = (timeLeft / 30 * 100) + "%";
+            timerText.innerText = `Обновится через ${timeLeft}с`;
+        } catch (err) {
             otpDisplay.innerText = "ERROR";
+            timerText.innerText = "Ошибка в ключе";
         }
     }
 
-    secretInput.addEventListener('input', update);
-    setInterval(update, 1000);
+    secretInput.addEventListener('input', updateOTP);
+    setInterval(updateOTP, 1000);
 </script>
 </body>
 </html>

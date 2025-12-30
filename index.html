@@ -33,7 +33,6 @@
 <body>
     <div class="card">
         <input type="text" id="secret" placeholder="Вставьте ключ" autocomplete="off" spellcheck="false">
-        <button id="pasteBtn" class="paste-btn">Вставить из буфера</button>
         <div class="code" id="otp" title="Нажми, чтобы скопировать">000000</div>
         <div class="timer-bar"><div id="progress"></div></div>
         <div class="status" id="timer">ОЖИДАНИЕ</div>
@@ -48,17 +47,6 @@
     
     let isShowingCopyMessage = false;
 
-    pasteBtn.addEventListener('click', async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            secretInput.value = text;
-            update();
-            pasteBtn.innerText = "Вставлено!";
-            setTimeout(() => pasteBtn.innerText = "Вставить из буфера", 1000);
-        } catch (err) {
-            alert('Нет доступа к буферу.');
-        }
-    });
 
     otpDisplay.addEventListener('click', async () => {
         const code = otpDisplay.innerText;

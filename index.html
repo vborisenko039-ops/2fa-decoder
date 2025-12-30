@@ -6,7 +6,7 @@
     <title>2FA Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.4.2/sha.js"></script>
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --accent: #0A84FF; --success: #32d74b; --text: #fff; }
+        :root { --bg: #000; --card: #1c1c1e; --accent: #8e8e93; --success: #32d74b; --text: #fff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .card { background: var(--card); padding: 30px; border-radius: 24px; width: 90%; max-width: 350px; text-align: center; }
         input { width: 100%; background: #2c2c2e; border: 2px solid #3a3a3c; border-radius: 12px; padding: 12px; color: white; font-size: 14px; margin-bottom: 10px; outline: none; box-sizing: border-box; text-align: center; }
@@ -33,7 +33,7 @@
 <body>
     <div class="card">
         <input type="text" id="secret" placeholder="2FA ключ" autocomplete="off" spellcheck="false">
-        <div class="code" id="otp" title="Нажми, чтобы скопировать">------</div>
+        <div class="code" id="otp" title="Нажми, чтобы скопировать">000000</div>
         <div class="timer-bar"><div id="progress"></div></div>
         <div class="status" id="timer">ОЖИДАНИЕ</div>
     </div>
@@ -59,7 +59,7 @@
             
             // Красим всё в зеленый
             otpDisplay.style.color = "var(--success)";
-            timerText.innerText = "СКОПИРОВАНО В БУФЕР!";
+            timerText.innerText = "СКОПИРОВАНО В БУФЕР";
             timerText.style.color = "var(--success)";
             progress.style.backgroundColor = "var(--success)"; // Полоска становится зеленой
 

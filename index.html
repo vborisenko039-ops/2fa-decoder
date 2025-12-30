@@ -32,7 +32,7 @@
 </head>
 <body>
     <div class="card">
-        <input type="text" id="secret" placeholder="Вставьте ключ" autocomplete="off" spellcheck="false">
+        <input type="text" id="secret" placeholder="2FA ключ" autocomplete="off" spellcheck="false">
         <div class="code" id="otp" title="Нажми, чтобы скопировать">000000</div>
         <div class="timer-bar"><div id="progress"></div></div>
         <div class="status" id="timer">ОЖИДАНИЕ</div>
@@ -57,7 +57,7 @@
             
             isShowingCopyMessage = true;
             otpDisplay.style.color = "var(--success)";
-            timerText.innerText = "СКОПИРОВАНО В БУФЕР!";
+            timerText.innerText = "СКОПИРОВАНО В БУФЕР";
             timerText.style.color = "var(--success)";
 
             // Теперь надпись держится 3 секунды (3000 мс)
@@ -119,7 +119,7 @@
             
             // Показываем таймер только если не висит сообщение о копировании
             if (!isShowingCopyMessage) {
-                timerText.innerText = `ОБНОВЛЕНИЕ ЧЕРЕЗ ${30 - seconds}с`;
+                timerText.innerText = `ОБНОВЛЕНИЕ ЧЕРЕЗ ${30 - seconds}`;
             }
             
         } catch (e) {

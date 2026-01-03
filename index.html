@@ -195,6 +195,7 @@ input:focus {
 
     secretInput.addEventListener('input', update);
     setInterval(update, 1000);
+    window.onload = () => secretInput.focus();
 </script>
 </body>
 </html>

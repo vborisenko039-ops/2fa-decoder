@@ -9,145 +9,220 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.4.2/sha.js"></script>
 
     <style>
-        :root { 
-            --bg: #000; 
-            --card: #1c1c1e; 
-            --accent: #0A84FF; 
-            --success: #32d74b; 
-            --text: #fff; 
-            --muted: #8e8e93;
+        :root {
+            --bg: #000;
+            --card: #1c1c1e;
+            --panel: #242426;
             --input: #2c2c2e;
             --border: #3a3a3c;
+            --accent: #0A84FF;
+            --success: #32d74b;
+            --danger: #ff453a;
+            --text: #fff;
+            --muted: #8e8e93;
         }
 
-        body { 
-            font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            padding: 20px;
+        * {
             box-sizing: border-box;
         }
 
-        .card { 
-            background: var(--card); 
-            padding: 24px; 
-            border-radius: 24px; 
-            width: 100%; 
-            max-width: 390px; 
-            text-align: center; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            box-sizing: border-box;
+        body {
+            font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top, #111 0%, #000 55%);
+            color: var(--text);
+            min-height: 100vh;
+            margin: 0;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        textarea { 
-            width: 100%; 
-            min-height: 120px;
-            resize: vertical;
-            background: var(--input); 
-            border: 2px solid var(--border); 
-            border-radius: 14px; 
-            padding: 12px; 
-            color: white; 
-            font-size: 14px; 
-            margin-bottom: 16px; 
-            outline: none; 
-            box-sizing: border-box; 
-            text-align: left; 
-            transition: all 0.2s;
-            font-family: inherit;
-            line-height: 1.4;
+        .app {
+            width: 100%;
+            max-width: 980px;
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 28px;
+            padding: 24px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+            min-height: 520px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 22px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 410px;
+            resize: none;
+            background: var(--input);
+            border: 2px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+            color: var(--text);
+            font-size: 16px;
+            line-height: 1.65;
+            outline: none;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            transition: 0.2s;
         }
 
         textarea:focus {
             border-color: var(--accent);
-            background: #3a3a3c;
+            background: #303033;
         }
 
         textarea::placeholder {
-            color: #777;
+            color: #666;
         }
 
         .codes-list {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-rows: repeat(8, 1fr);
             gap: 10px;
-            margin-top: 6px;
+            height: 410px;
         }
 
         .code-row {
-            background: #2c2c2e;
-            border: 1px solid #3a3a3c;
+            background: var(--input);
+            border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 14px 12px;
+            min-height: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
 
-        .code { 
-            font-size: 42px; 
-            font-weight: 800; 
-            color: var(--accent); 
-            letter-spacing: 4px; 
+        .code {
+            width: 100%;
+            text-align: center;
+            font-size: clamp(26px, 4vw, 42px);
+            font-weight: 850;
+            color: var(--accent);
+            letter-spacing: 4px;
             font-variant-numeric: tabular-nums;
             cursor: pointer;
-            transition: transform 0.1s, color 0.2s;
             user-select: none;
             line-height: 1;
+            transition: transform 0.1s, color 0.2s;
         }
 
-        .code:active { 
-            transform: scale(0.95); 
+        .code:active {
+            transform: scale(0.95);
         }
 
-        .empty {
+        .code.empty-code {
+            color: #555;
+            font-size: 18px;
+            letter-spacing: 0;
+            cursor: default;
+            font-weight: 700;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 5px;
+            background: #333;
+            margin-top: 18px;
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        #progress {
+            height: 100%;
+            background: var(--accent);
+            width: 100%;
+            transition: width 1s linear, background-color 0.3s ease;
+        }
+
+        .status {
             color: var(--muted);
-            font-size: 13px;
-            padding: 20px 0 8px;
+            font-size: 12px;
+            margin-top: 14px;
             text-transform: uppercase;
+            min-height: 14px;
+            text-align: center;
+            letter-spacing: 0.04em;
         }
 
-        .timer-bar { 
-            width: 100%; 
-            height: 4px; 
-            background: #333; 
-            margin-top: 16px; 
-            border-radius: 2px; 
-            overflow: hidden; 
-        }
+        @media (max-width: 760px) {
+            body {
+                padding: 14px;
+                align-items: flex-start;
+            }
 
-        #progress { 
-            height: 100%; 
-            background: var(--accent); 
-            width: 100%; 
-            transition: width 1s linear, background-color 0.3s ease; 
-        }
+            .app {
+                padding: 16px;
+                border-radius: 22px;
+            }
 
-        .status { 
-            color: var(--muted); 
-            font-size: 12px; 
-            margin-top: 15px; 
-            text-transform: uppercase; 
-            min-height: 14px; 
+            .layout {
+                grid-template-columns: 1fr;
+                min-height: auto;
+                gap: 16px;
+            }
+
+            textarea {
+                min-height: 230px;
+                font-size: 14px;
+            }
+
+            .codes-list {
+                height: auto;
+                grid-template-rows: none;
+                grid-auto-rows: 58px;
+            }
+
+            .code {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <textarea 
-            id="secrets" 
-            placeholder="Вставь 2FA ключи&#10;Каждый ключ с новой строки"
-            autocomplete="off" 
-            spellcheck="false"></textarea>
+    <div class="app">
+        <div class="layout">
+            <div class="panel">
+                <div class="panel-title">Ключи</div>
 
-        <div class="codes-list" id="codesList">
-            <div class="empty">Ожидание ключей</div>
+                <textarea
+                    id="secrets"
+                    placeholder="Вставь до 8 ключей&#10;Каждый ключ с новой строки&#10;&#10;JBSWY3DPEHPK3PXP&#10;JBSWY3DPEHPK3PXQ"
+                    autocomplete="off"
+                    spellcheck="false"></textarea>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Коды</div>
+
+                <div class="codes-list" id="codesList"></div>
+            </div>
         </div>
 
         <div class="timer-bar">
@@ -163,6 +238,7 @@
     const progress = document.getElementById('progress');
     const timerText = document.getElementById('timer');
 
+    const MAX_KEYS = 8;
     let isShowingCopyMessage = false;
 
     function base32tohex(base32) {
@@ -221,11 +297,12 @@
         return secretsInput.value
             .split('\n')
             .map(item => item.trim())
-            .filter(item => item.length > 0);
+            .filter(item => item.length > 0)
+            .slice(0, MAX_KEYS);
     }
 
     async function copyCode(code, element) {
-        if (!code || code === "ERROR") {
+        if (!code || code === "ERROR" || code === "—") {
             return;
         }
 
@@ -233,8 +310,6 @@
             await navigator.clipboard.writeText(code);
 
             isShowingCopyMessage = true;
-
-            const oldColor = element.style.color;
 
             element.style.color = "var(--success)";
             timerText.innerText = "СКОПИРОВАНО В БУФЕР";
@@ -244,24 +319,53 @@
             setTimeout(() => {
                 isShowingCopyMessage = false;
 
-                element.style.color = oldColor || "var(--accent)";
+                element.style.color = "var(--accent)";
                 timerText.style.color = "var(--muted)";
                 progress.style.backgroundColor = "var(--accent)";
 
                 update();
-            }, 1500);
+            }, 1200);
 
         } catch (err) {
             timerText.innerText = "ОШИБКА КОПИРОВАНИЯ";
-            timerText.style.color = "#ff453a";
+            timerText.style.color = "var(--danger)";
+        }
+    }
+
+    function createCodeRow(value, isEmpty = false, isError = false) {
+        const row = document.createElement('div');
+        row.className = 'code-row';
+
+        const code = document.createElement('div');
+        code.className = isEmpty ? 'code empty-code' : 'code';
+        code.innerText = value;
+
+        if (isError) {
+            code.style.color = "var(--danger)";
+        }
+
+        if (!isEmpty && !isError) {
+            code.title = 'Нажми, чтобы скопировать';
+            code.addEventListener('click', () => copyCode(value, code));
+        }
+
+        row.appendChild(code);
+        return row;
+    }
+
+    function renderEmptyRows(filledCount) {
+        for (let i = filledCount; i < MAX_KEYS; i++) {
+            codesList.appendChild(createCodeRow("—", true));
         }
     }
 
     function update() {
         const secrets = getSecrets();
 
+        codesList.innerHTML = "";
+
         if (secrets.length === 0) {
-            codesList.innerHTML = '<div class="empty">Ожидание ключей</div>';
+            renderEmptyRows(0);
             progress.style.width = "100%";
 
             if (!isShowingCopyMessage) {
@@ -272,28 +376,14 @@
             return;
         }
 
-        codesList.innerHTML = "";
-
         secrets.forEach(secret => {
             const otp = generateOTP(secret);
+            const isError = otp === "ERROR";
 
-            const row = document.createElement('div');
-            row.className = 'code-row';
-
-            const code = document.createElement('div');
-            code.className = 'code';
-            code.innerText = otp;
-            code.title = 'Нажми, чтобы скопировать';
-
-            if (otp === "ERROR") {
-                code.style.color = "#ff453a";
-            }
-
-            code.addEventListener('click', () => copyCode(otp, code));
-
-            row.appendChild(code);
-            codesList.appendChild(row);
+            codesList.appendChild(createCodeRow(otp, false, isError));
         });
+
+        renderEmptyRows(secrets.length);
 
         const epoch = Math.round(new Date().getTime() / 1000.0);
         const seconds = epoch % 30;

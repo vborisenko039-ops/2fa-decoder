@@ -7,196 +7,314 @@
     <link rel="icon" type="image/png" sizes="512x512" href="icon.png?v=1">
     <link rel="apple-touch-icon" href="icon.png?v=1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.4.2/sha.js"></script>
+
     <style>
-     :root { 
-    --bg: #000; 
-    --card: #1c1c1e; 
-    --accent: #0A84FF; 
-    --success: #32d74b; 
-    --text: #fff; 
-}
+        :root { 
+            --bg: #000; 
+            --card: #1c1c1e; 
+            --accent: #0A84FF; 
+            --success: #32d74b; 
+            --text: #fff; 
+            --muted: #8e8e93;
+            --input: #2c2c2e;
+            --border: #3a3a3c;
+        }
 
-body { 
-    /* Используем системные шрифты Apple */
-    font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif; 
-    background: var(--bg); 
-    color: var(--text); 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    height: 100vh; 
-    margin: 0; 
-}
+        body { 
+            font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
-.card { 
-    background: var(--card); 
-    padding: 30px; 
-    border-radius: 24px; 
-    width: 90%; 
-    max-width: 350px; 
-    text-align: center; 
-    /* Добавим легкую тень, чтобы на Маке смотрелось объемнее */
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-}
+        .card { 
+            background: var(--card); 
+            padding: 24px; 
+            border-radius: 24px; 
+            width: 100%; 
+            max-width: 390px; 
+            text-align: center; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            box-sizing: border-box;
+        }
 
-input { 
-    width: 100%; 
-    background: #2c2c2e; 
-    border: 2px solid #3a3a3c; 
-    border-radius: 12px; 
-    padding: 12px; 
-    color: white; 
-    font-size: 14px; 
-    margin-bottom: 10px; 
-    outline: none; 
-    box-sizing: border-box; 
-    text-align: center; 
-    transition: all 0.2s;
-}
+        textarea { 
+            width: 100%; 
+            min-height: 120px;
+            resize: vertical;
+            background: var(--input); 
+            border: 2px solid var(--border); 
+            border-radius: 14px; 
+            padding: 12px; 
+            color: white; 
+            font-size: 14px; 
+            margin-bottom: 16px; 
+            outline: none; 
+            box-sizing: border-box; 
+            text-align: left; 
+            transition: all 0.2s;
+            font-family: inherit;
+            line-height: 1.4;
+        }
 
-/* Красивое свечение при фокусе (когда нажал на поле) */
-input:focus {
-    border-color: var(--accent);
-    background: #3a3a3c;
-}
+        textarea:focus {
+            border-color: var(--accent);
+            background: #3a3a3c;
+        }
 
-.paste-btn {
-    background: transparent; color: var(--accent); border: 1px solid #3a3a3c; padding: 8px 16px;
-    border-radius: 100px; font-size: 13px; cursor: pointer; margin-bottom: 20px; width: auto;
-    display: inline-block; transition: all 0.2s;
-}
-.paste-btn:hover { background: rgba(10, 132, 255, 0.1); }
-.paste-btn:active { transform: scale(0.95); }
+        textarea::placeholder {
+            color: #777;
+        }
 
-.code { 
-    font-size: 64px; font-weight: 800; color: var(--accent); 
-    letter-spacing: 4px; margin: 5px 0 15px 0; 
-    font-variant-numeric: tabular-nums;
-    cursor: pointer;
-    transition: transform 0.1s, color 0.2s;
-    user-select: none;
-}
-.code:active { transform: scale(0.95); }
+        .codes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 6px;
+        }
 
-.timer-bar { width: 100%; height: 4px; background: #333; margin-top: 10px; border-radius: 2px; overflow: hidden; }
+        .code-row {
+            background: #2c2c2e;
+            border: 1px solid #3a3a3c;
+            border-radius: 16px;
+            padding: 14px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-#progress { 
-    height: 100%; 
-    background: var(--accent); 
-    width: 100%; 
-    /* Плавная анимация цвета и движения */
-    transition: width 1s linear, background-color 0.3s ease; 
-}
+        .code { 
+            font-size: 42px; 
+            font-weight: 800; 
+            color: var(--accent); 
+            letter-spacing: 4px; 
+            font-variant-numeric: tabular-nums;
+            cursor: pointer;
+            transition: transform 0.1s, color 0.2s;
+            user-select: none;
+            line-height: 1;
+        }
 
-.status { color: #8e8e93; font-size: 12px; margin-top: 15px; text-transform: uppercase; min-height: 14px; }
+        .code:active { 
+            transform: scale(0.95); 
+        }
+
+        .empty {
+            color: var(--muted);
+            font-size: 13px;
+            padding: 20px 0 8px;
+            text-transform: uppercase;
+        }
+
+        .timer-bar { 
+            width: 100%; 
+            height: 4px; 
+            background: #333; 
+            margin-top: 16px; 
+            border-radius: 2px; 
+            overflow: hidden; 
+        }
+
+        #progress { 
+            height: 100%; 
+            background: var(--accent); 
+            width: 100%; 
+            transition: width 1s linear, background-color 0.3s ease; 
+        }
+
+        .status { 
+            color: var(--muted); 
+            font-size: 12px; 
+            margin-top: 15px; 
+            text-transform: uppercase; 
+            min-height: 14px; 
+        }
     </style>
 </head>
+
 <body>
     <div class="card">
-        <input type="text" id="secret" placeholder="2FA ключ" autocomplete="off" spellcheck="false">
-        <div class="code" id="otp" title="Нажми, чтобы скопировать">000000</div>
-        <div class="timer-bar"><div id="progress"></div></div>
+        <textarea 
+            id="secrets" 
+            placeholder="Вставь 2FA ключи&#10;Каждый ключ с новой строки"
+            autocomplete="off" 
+            spellcheck="false"></textarea>
+
+        <div class="codes-list" id="codesList">
+            <div class="empty">Ожидание ключей</div>
+        </div>
+
+        <div class="timer-bar">
+            <div id="progress"></div>
+        </div>
+
         <div class="status" id="timer">ОЖИДАНИЕ</div>
     </div>
 
 <script>
-    const secretInput = document.getElementById('secret');
-    const otpDisplay = document.getElementById('otp');
+    const secretsInput = document.getElementById('secrets');
+    const codesList = document.getElementById('codesList');
     const progress = document.getElementById('progress');
     const timerText = document.getElementById('timer');
-    const pasteBtn = document.getElementById('pasteBtn');
-    
+
     let isShowingCopyMessage = false;
 
-
-   otpDisplay.addEventListener('click', async () => {
-        const code = otpDisplay.innerText;
-        if (code === '000000' || code === 'ERROR') return;
-
-        try {
-            await navigator.clipboard.writeText(code);
-            
-            isShowingCopyMessage = true;
-            
-            // Красим всё в зеленый
-            otpDisplay.style.color = "var(--success)";
-            timerText.innerText = "СКОПИРОВАНО В БУФЕР";
-            timerText.style.color = "var(--success)";
-            progress.style.backgroundColor = "var(--success)"; // Полоска становится зеленой
-
-            // Возвращаем всё назад через 3 секунды
-            setTimeout(() => {
-                isShowingCopyMessage = false;
-                
-                otpDisplay.style.color = "var(--accent)";
-                timerText.style.color = "#8e8e93";
-                progress.style.backgroundColor = "var(--accent)"; // Возвращаем синий цвет полоске
-                
-                update(); // Сразу обновляем текст таймера
-            }, 3000);
-        } catch (err) {
-            console.error(err);
-        }
-    });
-
     function base32tohex(base32) {
-        let base32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        const base32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
         let bits = "";
         let hex = "";
+
         base32 = base32.replace(/\s/g, '').toUpperCase();
+
         for (let i = 0; i < base32.length; i++) {
-            let val = base32chars.indexOf(base32.charAt(i));
-            if (val === -1) continue;
+            const val = base32chars.indexOf(base32.charAt(i));
+
+            if (val === -1) {
+                continue;
+            }
+
             bits += val.toString(2).padStart(5, '0');
         }
+
         for (let i = 0; i + 4 <= bits.length; i += 4) {
-            let chunk = bits.substr(i, 4);
-            hex = hex + parseInt(chunk, 2).toString(16);
+            const chunk = bits.substr(i, 4);
+            hex += parseInt(chunk, 2).toString(16);
         }
+
         return hex;
     }
 
-    function update() {
-        let secret = secretInput.value;
-        if (!secret) {
-            otpDisplay.innerText = "000000";
-            if (!isShowingCopyMessage) timerText.innerText = "ОЖИДАНИЕ";
+    function generateOTP(secret) {
+        const keyHex = base32tohex(secret);
+
+        if (!keyHex) {
+            return "ERROR";
+        }
+
+        const epoch = Math.round(new Date().getTime() / 1000.0);
+
+        let time = Math.floor(epoch / 30).toString(16);
+        while (time.length < 16) {
+            time = "0" + time;
+        }
+
+        const shaObj = new jsSHA("SHA-1", "HEX");
+        shaObj.setHMACKey(keyHex, "HEX");
+        shaObj.update(time);
+
+        const hmac = shaObj.getHMAC("HEX");
+        const offset = parseInt(hmac.substring(hmac.length - 1), 16);
+
+        let otp = (parseInt(hmac.substr(offset * 2, 8), 16) & 0x7fffffff) + "";
+        otp = otp.substr(otp.length - 6, 6);
+
+        return otp;
+    }
+
+    function getSecrets() {
+        return secretsInput.value
+            .split('\n')
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
+    }
+
+    async function copyCode(code, element) {
+        if (!code || code === "ERROR") {
             return;
         }
 
         try {
-            const keyHex = base32tohex(secret);
-            const epoch = Math.round(new Date().getTime() / 1000.0);
-            let time = Math.floor(epoch / 30).toString(16);
-            while (time.length < 16) time = "0" + time;
+            await navigator.clipboard.writeText(code);
 
-            const shaObj = new jsSHA("SHA-1", "HEX");
-            shaObj.setHMACKey(keyHex, "HEX");
-            shaObj.update(time);
-            const hmac = shaObj.getHMAC("HEX");
+            isShowingCopyMessage = true;
 
-            const offset = parseInt(hmac.substring(hmac.length - 1), 16);
-            let otp = (parseInt(hmac.substr(offset * 2, 8), 16) & 0x7fffffff) + "";
-            otp = otp.substr(otp.length - 6, 6);
+            const oldColor = element.style.color;
 
-            otpDisplay.innerText = otp;
+            element.style.color = "var(--success)";
+            timerText.innerText = "СКОПИРОВАНО В БУФЕР";
+            timerText.style.color = "var(--success)";
+            progress.style.backgroundColor = "var(--success)";
 
-            const seconds = epoch % 30;
-            progress.style.width = ((30 - seconds) / 30 * 100) + "%";
-            
-            // Показываем таймер только если не висит сообщение о копировании
-            if (!isShowingCopyMessage) {
-                timerText.innerText = `ОБНОВЛЕНИЕ ЧЕРЕЗ ${30 - seconds}`;
-            }
-            
-        } catch (e) {
-            otpDisplay.innerText = "ERROR";
+            setTimeout(() => {
+                isShowingCopyMessage = false;
+
+                element.style.color = oldColor || "var(--accent)";
+                timerText.style.color = "var(--muted)";
+                progress.style.backgroundColor = "var(--accent)";
+
+                update();
+            }, 1500);
+
+        } catch (err) {
+            timerText.innerText = "ОШИБКА КОПИРОВАНИЯ";
+            timerText.style.color = "#ff453a";
         }
     }
 
-    secretInput.addEventListener('input', update);
+    function update() {
+        const secrets = getSecrets();
+
+        if (secrets.length === 0) {
+            codesList.innerHTML = '<div class="empty">Ожидание ключей</div>';
+            progress.style.width = "100%";
+
+            if (!isShowingCopyMessage) {
+                timerText.innerText = "ОЖИДАНИЕ";
+                timerText.style.color = "var(--muted)";
+            }
+
+            return;
+        }
+
+        codesList.innerHTML = "";
+
+        secrets.forEach(secret => {
+            const otp = generateOTP(secret);
+
+            const row = document.createElement('div');
+            row.className = 'code-row';
+
+            const code = document.createElement('div');
+            code.className = 'code';
+            code.innerText = otp;
+            code.title = 'Нажми, чтобы скопировать';
+
+            if (otp === "ERROR") {
+                code.style.color = "#ff453a";
+            }
+
+            code.addEventListener('click', () => copyCode(otp, code));
+
+            row.appendChild(code);
+            codesList.appendChild(row);
+        });
+
+        const epoch = Math.round(new Date().getTime() / 1000.0);
+        const seconds = epoch % 30;
+        const left = 30 - seconds;
+
+        progress.style.width = (left / 30 * 100) + "%";
+
+        if (!isShowingCopyMessage) {
+            timerText.innerText = `ОБНОВЛЕНИЕ ЧЕРЕЗ ${left}`;
+            timerText.style.color = "var(--muted)";
+        }
+    }
+
+    secretsInput.addEventListener('input', update);
+
     setInterval(update, 1000);
-    window.onload = () => secretInput.focus();
+
+    window.onload = () => {
+        secretsInput.focus();
+        update();
+    };
 </script>
 </body>
 </html>

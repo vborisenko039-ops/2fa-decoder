@@ -100,18 +100,44 @@
             color: #666;
         }
 
+        .clear-btn {
+            margin-top: 12px;
+            width: 100%;
+            height: 42px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #2c2c2e;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .clear-btn:hover {
+            background: #343438;
+            color: var(--text);
+        }
+
+        .clear-btn:active {
+            transform: scale(0.98);
+        }
+
         .codes-list {
-            display: grid;
-            grid-template-rows: repeat(8, 1fr);
-            gap: 10px;
-            height: 410px;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            max-height: 410px;
+            overflow: hidden;
         }
 
         .code-row {
             background: var(--input);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            min-height: 0;
+            border-radius: 14px;
+            height: 46px;
+            min-height: 46px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -121,10 +147,10 @@
         .code {
             width: 100%;
             text-align: center;
-            font-size: clamp(26px, 4vw, 42px);
-            font-weight: 850;
+            font-size: clamp(24px, 3vw, 34px);
+            font-weight: 800;
             color: var(--accent);
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             font-variant-numeric: tabular-nums;
             cursor: pointer;
             user-select: none;
@@ -136,12 +162,16 @@
             transform: scale(0.95);
         }
 
-        .code.empty-code {
+        .empty-state {
+            height: 410px;
+            border: 1px dashed var(--border);
+            border-radius: 16px;
             color: #555;
-            font-size: 18px;
-            letter-spacing: 0;
-            cursor: default;
-            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            text-transform: uppercase;
         }
 
         .timer-bar {
@@ -193,13 +223,21 @@
             }
 
             .codes-list {
-                height: auto;
-                grid-template-rows: none;
-                grid-auto-rows: 58px;
+                max-height: none;
+                overflow: visible;
+            }
+
+            .code-row {
+                height: 44px;
+                min-height: 44px;
             }
 
             .code {
-                font-size: 32px;
+                font-size: 30px;
+            }
+
+            .empty-state {
+                height: 180px;
             }
         }
     </style>
@@ -216,12 +254,16 @@
                     placeholder="Вставь до 8 ключей&#10;Каждый ключ с новой строки&#10;&#10;JBSWY3DPEHPK3PXP&#10;JBSWY3DPEHPK3PXQ"
                     autocomplete="off"
                     spellcheck="false"></textarea>
+
+                <button class="clear-btn" id="clearBtn">Очистить</button>
             </div>
 
             <div class="panel">
                 <div class="panel-title">Коды</div>
 
-                <div class="codes-list" id="codesList"></div>
+                <div class="codes-list" id="codesList">
+                    <div class="empty-state">Коды появятся здесь</div>
+                </div>
             </div>
         </div>
 
@@ -234,6 +276,7 @@
 
 <script>
     const secretsInput = document.getElementById('secrets');
+    const clearBtn = document.getElementById('clearBtn');
     const codesList = document.getElementById('codesList');
     const progress = document.getElementById('progress');
     const timerText = document.getElementById('timer');
@@ -302,7 +345,7 @@
     }
 
     async function copyCode(code, element) {
-        if (!code || code === "ERROR" || code === "—") {
+        if (!code || code === "ERROR") {
             return;
         }
 
@@ -332,19 +375,17 @@
         }
     }
 
-    function createCodeRow(value, isEmpty = false, isError = false) {
+    function createCodeRow(value, isError = false) {
         const row = document.createElement('div');
         row.className = 'code-row';
 
         const code = document.createElement('div');
-        code.className = isEmpty ? 'code empty-code' : 'code';
+        code.className = 'code';
         code.innerText = value;
 
         if (isError) {
             code.style.color = "var(--danger)";
-        }
-
-        if (!isEmpty && !isError) {
+        } else {
             code.title = 'Нажми, чтобы скопировать';
             code.addEventListener('click', () => copyCode(value, code));
         }
@@ -353,19 +394,13 @@
         return row;
     }
 
-    function renderEmptyRows(filledCount) {
-        for (let i = filledCount; i < MAX_KEYS; i++) {
-            codesList.appendChild(createCodeRow("—", true));
-        }
-    }
-
     function update() {
         const secrets = getSecrets();
 
         codesList.innerHTML = "";
 
         if (secrets.length === 0) {
-            renderEmptyRows(0);
+            codesList.innerHTML = '<div class="empty-state">Коды появятся здесь</div>';
             progress.style.width = "100%";
 
             if (!isShowingCopyMessage) {
@@ -380,10 +415,8 @@
             const otp = generateOTP(secret);
             const isError = otp === "ERROR";
 
-            codesList.appendChild(createCodeRow(otp, false, isError));
+            codesList.appendChild(createCodeRow(otp, isError));
         });
-
-        renderEmptyRows(secrets.length);
 
         const epoch = Math.round(new Date().getTime() / 1000.0);
         const seconds = epoch % 30;
@@ -396,6 +429,17 @@
             timerText.style.color = "var(--muted)";
         }
     }
+
+    clearBtn.addEventListener('click', () => {
+        secretsInput.value = "";
+        codesList.innerHTML = '<div class="empty-state">Коды появятся здесь</div>';
+        progress.style.width = "100%";
+        progress.style.backgroundColor = "var(--accent)";
+        timerText.innerText = "ОЖИДАНИЕ";
+        timerText.style.color = "var(--muted)";
+        update();
+        secretsInput.focus();
+    });
 
     secretsInput.addEventListener('input', update);
 

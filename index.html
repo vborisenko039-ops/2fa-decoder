@@ -10,6 +10,7 @@
 
     <style>
         :root {
+    --theme-transition: .3s ease;
             --bg: #000;
             --card: #1c1c1e;
             --panel: #242426;
@@ -241,11 +242,70 @@
                 height: 180px;
             }
         }
-    </style>
+    
+.theme-btn {
+    position:absolute;
+    top:18px;
+    right:18px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--input);
+    color:var(--text);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.theme-btn svg {
+    width:21px;
+    height:21px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+}
+
+.moon-icon {
+    display:none;
+}
+
+body.light .sun-icon {
+    display:none;
+}
+
+body.light .moon-icon {
+    display:block;
+}
+
+.app {
+    position:relative;
+}
+
+</style>
 </head>
 
 <body>
     <div class="app">
+        <button class="theme-btn" id="themeBtn" aria-label="Переключить тему">
+            <svg class="sun-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+            <svg class="moon-icon" viewBox="0 0 24 24">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
         <div class="layout">
             <div class="panel">
                 <div class="panel-title">Ключи</div>
@@ -276,6 +336,22 @@
     </div>
 
 <script>
+const themeBtn = document.getElementById('themeBtn');
+
+if (localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light');
+}
+
+if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light');
+        localStorage.setItem(
+            'theme',
+            document.body.classList.contains('light') ? 'light' : 'dark'
+        );
+    });
+}
+
     const secretsInput = document.getElementById('secrets');
     const clearBtn = document.getElementById('clearBtn');
     const codesList = document.getElementById('codesList');

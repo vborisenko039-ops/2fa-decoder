@@ -128,7 +128,7 @@
         }
 
         .clear-btn:hover {
-            background: var(--input);
+            background: #343438;
             color: var(--text);
         }
 
@@ -254,83 +254,87 @@
             }
         }
     
-        .theme-btn {
-            position:absolute;
-            top:18px;
-            right:18px;
-            width:42px;
-            height:42px;
-            border-radius:50%;
-            border:1px solid var(--border);
-            background:var(--input);
-            color:var(--text);
-            cursor:pointer;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            transition:.25s ease;
-        }
-        
-        .theme-btn:hover {
-            transform:scale(1.08);
-        }
-        
-        .theme-btn svg {
-            width:21px;
-            height:21px;
-            fill:none;
-            stroke:currentColor;
-            stroke-width:2;
-            stroke-linecap:round;
-            stroke-linejoin:round;
-        }
-        
-        .moon-icon {
-            display:none;
-        }
-        
-        body.light .sun-icon {
-            display:none;
-        }
-        
-        body.light .moon-icon {
-            display:block;
-        }
-        
-        .app {
-            position:relative;
-        }
-        
-        .select-btn {
-            margin-top:10px;
-            width:100%;
-            height:42px;
-            border:1px solid var(--border);
-            border-radius:14px;
-            background:var(--input);
-            color: var(--muted);
-            font-size:14px;
-            font-weight:700;
-            cursor:pointer;
-            transition:.2s;
-        }
-        
-        .select-btn:hover {
-            background: var(--input);
-            color: var(--text);
-        }
-        
-        .select-btn:active {
-            transform:scale(.98);
-        }
-        
-        .code-row.selected {
-            border-color: var(--success);
-            background: rgba(50, 215, 75, 0.15);
-            box-shadow: 0 0 0 2px rgba(50, 215, 75, 0.2);
-            transition: .25s ease;
-        }
-    </style>
+.theme-btn {
+    position:absolute;
+    top:18px;
+    right:18px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--input);
+    color:var(--text);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:.25s ease;
+}
+
+.theme-btn:hover {
+    transform:scale(1.08);
+}
+
+.theme-btn svg {
+    width:21px;
+    height:21px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+}
+
+.moon-icon {
+    display:none;
+}
+
+body.light .sun-icon {
+    display:none;
+}
+
+body.light .moon-icon {
+    display:block;
+}
+
+.app {
+    position:relative;
+}
+
+
+.select-btn {
+    margin-top:10px;
+    width:100%;
+    height:42px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--input);
+    color:var(--muted);
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:
+        background .3s ease,
+        color .3s ease,
+        border-color .3s ease;
+}
+
+.select-btn:hover {
+    border-color:var(--input);
+    color:var(--text);
+}
+
+.select-btn:active {
+    transform:scale(.98);
+}
+
+.code-row.selected {
+    border-color: var(--success);
+    background: rgba(50, 215, 75, 0.15);
+    box-shadow: 0 0 0 2px rgba(50, 215, 75, 0.2);
+    transition: .25s ease;
+}
+</style>
 </head>
 
 <body>
@@ -525,24 +529,32 @@ if (themeBtn) {
     
 function selectAllCodes() {
 
-    const codeElements =
-        [...document.querySelectorAll('.code')];
+    const codes = [
+        ...document.querySelectorAll('.code')
+    ].map(el => el.innerText);
 
-    if (!codeElements.length) {
+
+    if (!codes.length) {
         return;
     }
+
+
+    const buffer = document.getElementById('selectionBuffer');
+
+    buffer.innerText = codes.join("\n");
+
 
     const selection = window.getSelection();
 
     selection.removeAllRanges();
 
+
     const range = document.createRange();
 
-    range.setStartBefore(codeElements[0]);
-    range.setEndAfter(codeElements[codeElements.length - 1]);
+    range.selectNodeContents(buffer);
+
 
     selection.addRange(range);
-
 
     document
         .querySelectorAll('.code-row')
@@ -555,26 +567,16 @@ function selectAllCodes() {
 
     btn.innerText = "Коды выделены ✓";
 
-    btn.style.background = "rgba(50,215,75,0.15)";
-    btn.style.borderColor = "var(--success)";
-    btn.style.color = "var(--success)";
-
 
     setTimeout(() => {
-
-        document
-            .querySelectorAll('.code-row')
-            .forEach(row => {
-                row.classList.remove('selected');
-            });
-
+        
+document
+    .querySelectorAll('.code-row')
+    .forEach(row => {
+        row.classList.remove('selected');
+    });
 
         btn.innerText = "Выделить все коды";
-
-        btn.style.background = "";
-        btn.style.borderColor = "";
-        btn.style.color = "";
-
     }, 1800);
 
 }
@@ -643,5 +645,13 @@ clearBtn.addEventListener('click', () => {
         update();
     };
 </script>
+
+<div id="selectionBuffer" style="
+    position:fixed;
+    left:-9999px;
+    top:-9999px;
+    white-space:pre;
+"></div>
+
 </body>
 </html>

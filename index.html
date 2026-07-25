@@ -128,8 +128,7 @@
         }
 
         .clear-btn:hover {
-            background: var(--input);
-            border-color: var(--accent);
+            background: #343438;
             color: var(--text);
         }
 
@@ -302,14 +301,35 @@ body.light .moon-icon {
     position:relative;
 }
 
-        textarea {
-            color-scheme: dark;
-        }
+.select-btn {
+    margin-top:10px;
+    width:100%;
+    height:42px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--input);
+    color:var(--text);
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
 
-        body.light textarea {
-            color-scheme: light;
-        }
-        </style>
+.select-btn:hover {
+    border-color:var(--accent);
+}
+
+.select-btn:active {
+    transform:scale(.98);
+}
+
+.code-row.selected {
+    border-color: var(--success);
+    background: rgba(50, 215, 75, 0.15);
+    box-shadow: 0 0 0 2px rgba(50, 215, 75, 0.2);
+    transition: .25s ease;
+}
+</style>
 </head>
 
 <body>
@@ -341,6 +361,7 @@ body.light .moon-icon {
                     spellcheck="false"></textarea>
 
                 <button class="clear-btn" id="clearBtn">Очистить</button>
+<button class="select-btn" id="selectBtn">Выделить все коды</button>
             </div>
 
             <div class="panel">
@@ -382,6 +403,7 @@ if (themeBtn) {
 
     const secretsInput = document.getElementById('secrets');
     const clearBtn = document.getElementById('clearBtn');
+    const selectBtn = document.getElementById('selectBtn');
     const codesList = document.getElementById('codesList');
     const progress = document.getElementById('progress');
     const timerText = document.getElementById('timer');
@@ -499,7 +521,65 @@ if (themeBtn) {
         return row;
     }
 
-    function update() {
+    
+function selectAllCodes() {
+
+    const codeElements =
+        [...document.querySelectorAll('.code')];
+
+    if (!codeElements.length) {
+        return;
+    }
+
+    const selection = window.getSelection();
+
+    selection.removeAllRanges();
+
+    const range = document.createRange();
+
+    range.setStartBefore(codeElements[0]);
+    range.setEndAfter(codeElements[codeElements.length - 1]);
+
+    selection.addRange(range);
+
+
+    document
+        .querySelectorAll('.code-row')
+        .forEach(row => {
+            row.classList.add('selected');
+        });
+
+
+    const btn = document.getElementById('selectBtn');
+
+    btn.innerText = "Коды выделены ✓";
+
+    btn.style.background = "rgba(50,215,75,0.15)";
+    btn.style.borderColor = "var(--success)";
+    btn.style.color = "var(--success)";
+
+
+    setTimeout(() => {
+
+        document
+            .querySelectorAll('.code-row')
+            .forEach(row => {
+                row.classList.remove('selected');
+            });
+
+
+        btn.innerText = "Выделить все коды";
+
+        btn.style.background = "";
+        btn.style.borderColor = "";
+        btn.style.color = "";
+
+    }, 1800);
+
+}
+
+
+function update() {
         const secrets = getSecrets();
 
         codesList.innerHTML = "";
@@ -535,7 +615,14 @@ if (themeBtn) {
         }
     }
 
-    clearBtn.addEventListener('click', () => {
+    
+selectBtn.addEventListener('click', () => {
+    selectAllCodes();
+});
+
+
+clearBtn.addEventListener('click', () => {
+
         secretsInput.value = "";
         codesList.innerHTML = '<div class="empty-state">Коды появятся здесь</div>';
         progress.style.width = "100%";
